@@ -1,0 +1,12 @@
+version: '3'
+
+includes:
+  included:
+    taskfile: Taskfile2.yml
+    aliases: [inc]
+
+tasks:
+  foo-*:
+    cmds:
+      - "echo bar: {{index .MATCH 0}}"
+    aliases: [f]
