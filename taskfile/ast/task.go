@@ -62,28 +62,38 @@ func (t *Task) LocalName() string {
 	return name
 }
 
-// WildcardMatch will check if the given string matches the name of the Task and returns any wildcard values.
-func (t *Task) WildcardMatch(name string) (bool, []string) {
-	// Convert the name into a regex string
-	regexStr := fmt.Sprintf("^%s$", strings.ReplaceAll(t.Task, "*", "(.*)"))
-	regex := regexp.MustCompile(regexStr)
-	wildcards := regex.FindStringSubmatch(name)
-	wildcardCount := strings.Count(t.Task, "*")
+func (t *Task) taskAndAliases() []string {
+	var all []string = []string{t.Task}
+	expand
+}
 
-	// If there are no wildcards, return false
-	if len(wildcards) == 0 {
-		return false, nil
+func (t *Task) Match(name string) *MatchingTask {
+	for _, alias := range t.Aliases {
+		// Convert the name into a regex string
+		regexStr := fmt.Sprintf("^%s$", strings.ReplaceAll(alias, "*", "(.*)"))
+		regex := regexp.MustCompile(regexStr)
+		wildcards := regex.FindStringSubmatch(name)
+		wildcardCount := strings.Count(alias, "*")
+
+		// if len(wildcards) is false, the string didn't match
+		if len(wildcards) == 0 {
+			continue
+		}
+
+		// Remove the first match, which is the full string
+		wildcards = wildcards[1:]
+
+		// If there are more/less wildcards than matches, it didn't match
+		if len(wildcards) != wildcardCount {
+			continue
+		}
+
+		return &MatchingTask{
+			Task:      t,
+			Wildcards: wildcards,
+		}
 	}
-
-	// Remove the first match, which is the full string
-	wildcards = wildcards[1:]
-
-	// If there are more/less wildcards than matches, return false
-	if len(wildcards) != wildcardCount {
-		return false, wildcards
-	}
-
-	return true, wildcards
+	return nil
 }
 
 func (t *Task) UnmarshalYAML(node *yaml.Node) error {

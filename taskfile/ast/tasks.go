@@ -26,21 +26,17 @@ func (t *Tasks) FindMatchingTasks(call *Call) []*MatchingTask {
 	if call == nil {
 		return nil
 	}
-	var task *Task
 	var matchingTasks []*MatchingTask
 	// If there is a direct match, return it
-	if task = t.OrderedMap.Get(call.Task); task != nil {
+	if task := t.OrderedMap.Get(call.Task); task != nil {
 		matchingTasks = append(matchingTasks, &MatchingTask{Task: task, Wildcards: nil})
 		return matchingTasks
 	}
 	// Attempt a wildcard match
 	// For now, we can just nil check the task before each loop
-	_ = t.Range(func(key string, value *Task) error {
-		if match, wildcards := value.WildcardMatch(call.Task); match {
-			matchingTasks = append(matchingTasks, &MatchingTask{
-				Task:      value,
-				Wildcards: wildcards,
-			})
+	_ = t.Range(func(key string, task *Task) error {
+		if match := task.Match(call.Task); match != nil {
+			matchingTasks = append(matchingTasks, match)
 		}
 		return nil
 	})
